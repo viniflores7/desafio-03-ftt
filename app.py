@@ -6,7 +6,6 @@ import json #Interagir com os arquivos JSON
 
 def main(): #Função principal para rodar o programa
     while True:
-        
         menu(True, opcoes_menuprincipal(), str="GERENCIADOR DE PERSONAGENS")
         op = str(input('\033[1mOpção =--> \033[m')).strip()
         if op == '1':
