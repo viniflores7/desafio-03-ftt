@@ -70,21 +70,31 @@ def new_character():
 def see_character(n=False): #Ver os personagens e a imagem cadastrada
         if verify_json('./api/characters.json'): #Se não tiver nenhum personagem cadastrado
             linha(34, 50)
-            print('Ainda não existe nenhum personagem cadastrado, seja o primeiro!')
+            print('Ainda não existe nenhum personagem cadastrado!')
             linha(34, 50)
+            sleep(0.7)
             backToMenu(main)
         else:  #Caso já tenha personagens cadastrados
             response = requests.get(url)
             if response.status_code == 200:
                 linha(34, 50)
                 characters = response.json()
-                for character in characters:
-                    print(f"Nome: {character.get('Nome')}")
-                    print(f"Descrição: {character.get('Descrição')}")
-                    print(f"Link para imagem: {(character.get('Link'))[0:20]}...") #Deixando o Link menor
-                    print(f"Programa: {character.get('Programa')}")
-                    print(f"Animador: {character.get('Animador')}")
+                if characters and isinstance(characters, list):  # Verifica se characters é uma lista não vazia
                     linha(34, 50)
+                    for character in characters:
+                        if isinstance(character, dict):  # Verifica se cada item da lista é um dicionário
+                            print(f"Nome: {character.get('Nome')}")
+                            print(f"Descrição: {character.get('Descrição')}")
+                            print(f"Link para imagem: {(character.get('Link'))[0:20]}...") # Deixando o Link menor
+                            print(f"Programa: {character.get('Programa')}")
+                            print(f"Animador: {character.get('Animador')}")
+                            linha(34, 50)
+                        else:
+                            print("Um item na lista não é um dicionário válido de personagem.")
+                else:
+                    print('Ainda não existe nenhum personagem cadastrado!')
+                    linha(34, 50)
+                    backToMenu(main)
                 if n: #Se n=True ele vai voltar para o menu principal
                     op = str(input('Aperte "Enter" para voltar para o menu principal: '))
                     op = 2
@@ -106,13 +116,17 @@ def delete_character():
             if conf != 'S':
                 backToMenu(main)
             else:
-                response = requests.delete(f'{url}/{nome}')
+                response = requests.get(f'{url}/{nome}') #Vendo se o personagem existe
                 if response.status_code == 200:
-                    print(f'\033[1;31mPersonagem "{nome}" deletado com sucesso.\033[m')
-                    backToMenu(main)
+                    response = requests.delete(f'{url}/{nome}') #Deletando o personagem
+                    if response.status_code == 200:
+                        print(f'\033[1;31mPersonagem "{nome}" deletado com sucesso.\033[m')
+                        backToMenu(main)
+                    else:
+                        print(f'Ocorreu um erro ao deletar o personagem. Código de status: {response.status_code}')
+                        backToMenu(main)
                 else:
-                    print(f'Ocorreu um erro ao adicionar o personagem. Código de status: {response.status_code}')
-                    backToMenu(main)
+                    print(f'O personagem "{nome}" não existe.')
         elif op == '2':
             backToMenu(main)
         else:
@@ -130,14 +144,18 @@ def see_image_character(): #Ver o link do personagem
             if conf != 'S':
                 backToMenu(main)
             else:
-                response = requests.get(f'{url}/{nome}')
+                response = requests.get(f'{url}/{nome}') #Vendo se o personagem existe
                 if response.status_code == 200:
-                    url_imagem = response.json() #Pegando a URL do personagem, se existir
-                    see_image(url_imagem)
-                    backToMenu(main)
+                    response = requests.get(f'{url}/{nome}')
+                    if response.status_code == 200:
+                        url_imagem = response.json() #Pegando a URL do personagem
+                        see_image(url_imagem)
+                        backToMenu(main)
+                    else:
+                        print(f'Ocorreu um erro ao adicionar o personagem. Código de status: {response.status_code}')
+                        backToMenu(main)
                 else:
-                    print(f'Ocorreu um erro ao adicionar o personagem. Código de status: {response.status_code}')
-                    backToMenu(main)
+                    print(f'O personagem "{nome}" não existe.')
         elif op == '2':
             backToMenu(main)
         else:
@@ -148,7 +166,7 @@ def sobre(): #Sobre do programa
     linha(33, 52)
     print('''\033[1mEste é um Gerenciador de Personagem onde:\n
 1 - Você pode cadastrar seu personagem, editar as informações antes de confirma-lo
-2 - Você pode abrir o link da imagem que anexar e ela irá abrir em seu navegador padrão (Todas as orientações estão no cadastro)
+2 - Você pode abrir o link da imagem que anexar e ela irá abrir em seu navegador padrão (Todas as orientações estão no cadastro). Caso o link para a imagem do personagem for inválido, ele não irá abrir.
 3 - É importante que você esteja rodando o arquivo da API, caso contrário as interações com ela não irão funcionar, consequentemente, o programa irá dar erro.
 \nDono do projeto e programador: Vinícius Flores Ribeiro
 Versão: 1.8 BETA''')
